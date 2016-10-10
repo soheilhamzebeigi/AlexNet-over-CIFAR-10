@@ -17,7 +17,6 @@
 # =============================================================================
 
 import sys, glob, os, random, shutil, time
-from flask import Flask, request, redirect, url_for
 import numpy as np
 import urllib 
 from singa import tensor, device, optimizer
