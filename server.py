@@ -1,0 +1,68 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+# =============================================================================
+
+from multiprocessing import Process
+from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
+
+app = Flask(__name__)
+top_k_ = 5
+
+def success(data=""):
+    res = dict(result="success", data=data)
+    return jsonify(res)
+
+def failure(message):
+    res = dict(result="message", message=message)
+    return jsonify(res)
+
+def start(port,queue):
+    global queue_,data_
+    queue_=queue
+    data_=[]
+    app.run(host='0.0.0.0', port=port)
+
+def getDataFromQueue():
+    global queue_,data
+    while not queue_.empty():
+        d = queue_.get()
+        data_.append(d)
+
+@app.route("/")
+@cross_origin()
+def index():
+    return "Hello,This is SINGA monitor http server"
+
+@app.route('/getAllData')
+@cross_origin()
+def getAllData():
+    global data_
+    getDataFromQueue()
+    return success(data_)
+
+@app.route('/getTopKData')
+@cross_origin()
+def getTopKData():
+    global data_
+    k = request.args.get("k", top_k_)
+    try:
+        k = int(k)
+    except:
+        return failure("k should be integer")
+    getDataFromQueue()
+    return success(data_[-k:])
