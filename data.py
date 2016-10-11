@@ -20,12 +20,18 @@ import urllib
 import cPickle
 import numpy as np
 
+data_folder = "data_"
 tar_data_url='https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
 tar_data_name='cifar-10-python.tar.gz'
 data_path='cifar-10-batches-py'
 
-data_folder = "data_"
 parameter_folder = "parameter_"
+parameter_name= "parameter.model"
+tar_parameter_url="http://comp.nus.edu.sg/~dbsystem/singa/assets/file/parameter.tar.gz"
+tar_parameter_name='parameter.tar.gz'
+
+mean_url="http://comp.nus.edu.sg/~dbsystem/singa/assets/file/train.mean.npy"
+mean_name="train.mean.npy"
 
 def load_dataset(filepath):
     print 'Loading data file %s' % filepath
@@ -56,29 +62,36 @@ def load_test_data():
     return np.array(images, dtype=np.float32), np.array(labels, dtype=np.int32)
 
 def load_mean_data():
-    mean_path = os.path.join(data_folder, 'train.mean')
+    mean_path = os.path.join(data_folder, mean_name)
     if os.path.exists(mean_path):
         return np.load(mean_path)
     return 
 
 def save_mean_data(mean):
-    mean_path = os.path.join(data_folder, 'train.mean')
+    mean_path = os.path.join(data_folder, mean_name)
     np.save(mean_path,mean)
     return
 
-
-def file_prepare():
-    '''
-        download all files and generate data.py
-    '''
+def train_file_prepare():
     if os.path.exists(os.path.join(data_folder,data_path)):
         return
 
     print "download file"
     #clean data
-    shutil.rmtree(data_folder, ignore_errors=True)
     download_file(tar_data_url,data_folder)
     untar_data(os.path.join(data_folder,tar_data_name), data_folder)
+
+
+def serve_file_prepare():
+    if not os.path.exists(os.path.join(parameter_folder,parameter_name)):
+        print "download parameter file"
+        download_file(tar_parameter_url,parameter_folder)
+        untar_data(os.path.join(parameter_folder,tar_parameter_name), parameter_folder)
+
+    if not os.path.exists(os.path.join(data_folder,mean_name)):
+        print "download mean file"
+        download_file(mean_url,data_folder)
+    #clean data
 
 def download_file(url, dest):
     '''
@@ -90,25 +103,29 @@ def download_file(url, dest):
         file_name = url.split('/')[-1]
         target = os.path.join(dest, file_name)
         urllib.urlretrieve(url, target)
-    return target
+    return 
 
-def get_parameter(file_name=None):
+def get_parameter(file_name=None,auto_find=False):
     '''
-    get the paticular file name or get the last parameter file
+    get a parameter file or return none
     '''
     if not os.path.exists(parameter_folder):
         os.makedirs(parameter_folder)
-        return
+        return None 
 
     if file_name:
         return os.path.join(parameter_folder, file_name)
 
-    parameter_list = [os.path.join(parameter_folder, f)
+    #find the last parameter file if outo_find is True 
+    if auto_find:
+        parameter_list = [os.path.join(parameter_folder, f)
                       for f in os.listdir(parameter_folder)]
-    if len(parameter_list) == 0:
-        return
-    parameter_list.sort()
-    return parameter_list[-1]
+        if len(parameter_list) == 0:
+            return None
+        parameter_list.sort()
+        return parameter_list[-1]
+    else:
+        return None
 
 def untar_data(file_path, dest):
     print 'untar data ..................'
