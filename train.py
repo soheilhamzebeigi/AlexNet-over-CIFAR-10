@@ -79,14 +79,9 @@ def main(argv=None):
         trainer.train()
 
         p.terminate()
-    except KeyboardInterrupt:
-        # handle keyboard interrupt
-        p.terminate()
-        return 0
-    except Exception, e:
+    except :
         p.terminate()
         traceback.print_exc()
-        sys.stderr.write("Error: " + str(e) + "\n")
         sys.stderr.write("  for help use --help \n\n")
         return 2
 

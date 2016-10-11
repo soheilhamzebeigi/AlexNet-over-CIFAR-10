@@ -92,20 +92,19 @@ def download_file(url, dest):
         urllib.urlretrieve(url, target)
     return target
 
-
 def get_parameter(file_name=None):
     '''
     get the paticular file name or get the last parameter file
     '''
-    if not os.path.exists(parameter_path):
-        os.makedirs(parameter_path)
+    if not os.path.exists(parameter_folder):
+        os.makedirs(parameter_folder)
         return
 
     if file_name:
-        return os.path.join(parameter_path, file_name)
+        return os.path.join(parameter_folder, file_name)
 
-    parameter_list = [os.path.join(parameter_path, f)
-                      for f in os.listdir(parameter_path)]
+    parameter_list = [os.path.join(parameter_folder, f)
+                      for f in os.listdir(parameter_folder)]
     if len(parameter_list) == 0:
         return
     parameter_list.sort()

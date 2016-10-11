@@ -38,10 +38,10 @@ class Trainer():
 
     def initialize(self,parameter_file):
         print 'Start intialization............'
-
         if parameter_file:
-            print 'initialize with %s' % parameter_file
-            self.model.load(parameter_file)
+            parameter = data.get_parameter(parameter_file)
+            print 'initialize with %s' % parameter
+            self.model.load(parameter)
 
         self.model.to_device(self.device)
         for (p, specs) in zip(self.model.param_values(),
