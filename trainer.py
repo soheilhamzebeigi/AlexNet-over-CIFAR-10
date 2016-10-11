@@ -60,7 +60,7 @@ class Trainer():
 
     def data_prepare(self):
 
-        data.file_prepare()
+        data.train_file_prepare()
         
         self.train_x, self.train_y = data.load_train_data()
         self.test_x, self.test_y = data.load_test_data()
