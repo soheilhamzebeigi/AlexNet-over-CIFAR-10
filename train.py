@@ -79,8 +79,10 @@ def main(argv=None):
         trainer.train()
 
         p.terminate()
+    except SystemExit:
+        return
     except:
-        p.terminate()
+        #p.terminate()
         traceback.print_exc()
         sys.stderr.write("  for help use --help \n\n")
         return 2

@@ -84,12 +84,13 @@ def train_file_prepare():
     '''download train file'''
     if os.path.exists(os.path.join(data_folder, data_path)):
         return
-
     print "download file"
     #clean data
     download_file(tar_data_url, data_folder)
     untar_data(os.path.join(data_folder, tar_data_name), data_folder)
 
+    if not os.path.exists(parameter_folder):
+        os.makedirs(parameter_folder)
 
 def serve_file_prepare():
     '''download parameter file and mean file'''

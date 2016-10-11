@@ -73,7 +73,8 @@ def main(argv=None):
         service.initialize(parameter_file)
 
         flaskserver.start_serve(port, service)
-
+    except SystemExit:
+        return 
     except:
         traceback.print_exc()
         sys.stderr.write("  for help use --help \n\n")
