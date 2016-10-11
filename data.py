@@ -26,7 +26,7 @@ tar_data_name='cifar-10-python.tar.gz'
 data_path='cifar-10-batches-py'
 
 parameter_folder = "parameter_"
-parameter_name= "parameter.model"
+parameter_name= "parameter"
 tar_parameter_url="http://comp.nus.edu.sg/~dbsystem/singa/assets/file/parameter.tar.gz"
 tar_parameter_name='parameter.tar.gz'
 
@@ -118,8 +118,10 @@ def get_parameter(file_name=None,auto_find=False):
 
     #find the last parameter file if outo_find is True 
     if auto_find:
-        parameter_list = [os.path.join(parameter_folder, f)
-                      for f in os.listdir(parameter_folder)]
+        parameter_list=[]
+        for f in os.listdir(parameter_folder):
+            if f.endswith(".model"):
+                parameter_list.append(os.path.join(parameter_folder, f[0:-6]))
         if len(parameter_list) == 0:
             return None
         parameter_list.sort()
