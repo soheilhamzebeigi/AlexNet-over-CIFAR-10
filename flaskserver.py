@@ -23,74 +23,94 @@ from flask_cors import CORS, cross_origin
 app = Flask(__name__)
 top_k_ = 5
 
+
 def success(data=""):
+    '''return success status in json format'''
     res = dict(result="success", data=data)
     return jsonify(res)
 
+
 def failure(message):
+    '''return failure status in json format'''
     res = dict(result="message", message=message)
     return jsonify(res)
 
-def start_monitor(port,queue):
-    global queue_,data_,type_
-    queue_=queue
-    data_=[]
-    type_="monitor"
+
+def start_monitor(port, queue):
+    '''
+    port run a server at 0.0.0.0:port
+    queue: transfer status information
+
+    data: buffer the information in queue
+    '''
+    global queue_, data_, type_
+    queue_ = queue
+    data_ = []
+    type_ = "monitor"
     app.run(host='0.0.0.0', port=port)
     return
 
-def start_serve(port,service):
-    global type_,service_
-    service_=service
-    type_="serve"
+
+def start_serve(port, service):
+    '''start a server for serve, e.g., identify a uploaded image'''
+    global type_, service_
+    service_ = service
+    type_ = "serve"
     app.run(host='0.0.0.0', port=port)
     return
+
 
 def getDataFromQueue():
-    global queue_,data
+    global queue_, data
     while not queue_.empty():
         d = queue_.get()
         data_.append(d)
+
 
 @app.route("/")
 @cross_origin()
 def index():
     global type_
     print type_
-    if type_== "monitor": 
+    if type_ == "monitor":
         return "Hello,This is SINGA monitor http server"
     else:
-        return send_from_directory(".","index.html",mimetype='text/html')
-   
-@app.route("/predict",methods=['POST'])
-@cross_origin() 
+        return send_from_directory(".", "index.html", mimetype='text/html')
+
+
+# predict a uploaded image
+@app.route("/predict", methods=['POST'])
+@cross_origin()
 def predict():
-    global type_,service_
-    if type_=="monitor":
+    global type_, service_
+    if type_ == "monitor":
         return failure("not available in monitor mode")
     if request.method == 'POST':
         try:
             print "test"
-            response=service_.serve(request)
+            response = service_.serve(request)
         except Exception as e:
             print str(e)
             return e
         return response
 
+
+# support two operations for user to monitor the training status
 @app.route('/getAllData')
 @cross_origin()
 def getAllData():
-    global data_,type_
-    if type_=="serve":
+    global data_, type_
+    if type_ == "serve":
         return failure("not available in serve mode")
     getDataFromQueue()
     return success(data_)
 
+
 @app.route('/getTopKData')
 @cross_origin()
 def getTopKData():
-    global data_,type_
-    if type_=="serve":
+    global data_, type_
+    if type_ == "serve":
         return failure("not available in serve mode")
     k = request.args.get("k", top_k_)
     try:

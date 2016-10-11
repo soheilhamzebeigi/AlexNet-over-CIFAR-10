@@ -25,29 +25,34 @@ from singa.proto import core_pb2
 import data
 import process
 
-top_k=5
+top_k = 5
+
 
 class Service():
     def __init__(self, model, use_cpu):
         self.model = model
         if use_cpu:
-            print "cpu mode is not supported at present!"
+            print "running with cpu"
+            self.device = device.get_default_device()
+            #print "cpu mode is not supported at present!"
         else:
             print "runing with gpu"
             self.device = device.create_cuda_gpu()
         self.opt = optimizer.SGD(momentum=0.9, weight_decay=0.0005)
 
-    def initialize(self,parameter_file=None):
+    def initialize(self, parameter_file=None):
+        '''get parameters of the model to run the model in predict manner'''
         data.serve_file_prepare()
         print 'Start intialization............'
-        parameter = data.get_parameter(parameter_file,True)
+        parameter = data.get_parameter(parameter_file, True)
         print 'initialize with %s' % parameter
         self.model.load(parameter)
         self.model.to_device(self.device)
         print 'End intialization............'
         self.mean = data.load_mean_data()
 
-    def serve(self,request):
+    def serve(self, request):
+        '''predict the label for the uploaded images'''
         image = request.files['image']
         if not image:
             return "error, no image file found!"
@@ -55,8 +60,8 @@ class Service():
             return "error, only jpg image is allowed."
         try:
             #process images
-            images=process.process_img(image,36,(32,32),True)
-            images=np.array(images[0:10]).astype(np.float32)
+            images = process.process_img(image, 36, (32, 32), True)
+            images = np.array(images[0:10]).astype(np.float32)
             #normalize
             images -= self.mean
 
@@ -66,17 +71,19 @@ class Service():
             y.to_host()
             y = tensor.to_numpy(y)
             prob = np.average(y, 0)
-            #sort and reverse 
+            #sort and reverse
             labels = np.flipud(np.argsort(prob))
-            response =""
+            response = ""
             for i in range(top_k):
-                response += "%s:%s<br/>" % (get_name(labels[i]),prob[labels[i]])
+                response += "%s:%s<br/>" % (get_name(labels[i]),
+                                            prob[labels[i]])
             return response
         except Exception as e:
             traceback.print_exc()
             print e
             return "sorry, system error."
-    
+
+
 def get_lr(epoch):
     if epoch < 360:
         return 0.0008
@@ -84,22 +91,26 @@ def get_lr(epoch):
         return 0.0001
     else:
         return 0.00001
-    
+
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ["jpg","JPG","JPEG","jpeg"]
 
-label_map={
-0:'airplane',
-1:'automobile',
-2:'bird',
-3:'cat',
-4:'deer',
-5:'dog',
-6:'frog',
-7:'horse',
-8:'ship',
-9:'truck'
+
+label_map = {
+    0: 'airplane',
+    1: 'automobile',
+    2: 'bird',
+    3: 'cat',
+    4: 'deer',
+    5: 'dog',
+    6: 'frog',
+    7: 'horse',
+    8: 'ship',
+    9: 'truck'
 }
+
+
 def get_name(label):
     return label_map[label]

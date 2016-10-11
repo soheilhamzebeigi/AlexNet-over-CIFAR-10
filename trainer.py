@@ -18,25 +18,31 @@
 
 import sys, glob, os, random, shutil, time
 import numpy as np
-import urllib 
+import urllib
 from singa import tensor, device, optimizer
 from singa import utils, initializer, metric
 from singa.proto import core_pb2
 
 import data
 
+
 class Trainer():
+    '''train a singa model'''
+
     def __init__(self, model, use_cpu, queue):
         self.model = model
         if use_cpu:
-            raise CLIError("Currently cpu is not support!")
+            print "runing with cpu"
+            self.device = device.get_default_device()
+            #raise CLIError("Currently cpu is not support!")
         else:
             print "runing with gpu"
             self.device = device.create_cuda_gpu()
         self.opt = optimizer.SGD(momentum=0.9, weight_decay=0.0005)
         self.queue = queue
 
-    def initialize(self,parameter_file):
+    def initialize(self, parameter_file):
+        '''initialize all parameters in the model'''
         print 'Start intialization............'
         if parameter_file:
             parameter = data.get_parameter(parameter_file)
@@ -59,19 +65,21 @@ class Trainer():
         print 'End intialization............'
 
     def data_prepare(self):
+        '''load data'''
 
         data.train_file_prepare()
-        
+
         self.train_x, self.train_y = data.load_train_data()
         self.test_x, self.test_y = data.load_test_data()
         self.mean = data.load_mean_data()
-        if self.mean == None:
-            self.mean=np.average(self.train_x, axis=0)
+        if self.mean is None:
+            self.mean = np.average(self.train_x, axis=0)
             data.save_mean_data(self.mean)
         self.train_x -= self.mean
         self.test_x -= self.mean
 
     def train(self, num_epoch=140, batch_size=50):
+        '''train and test model'''
 
         self.data_prepare()
 
@@ -86,6 +94,7 @@ class Trainer():
 
         accuracy = metric.Accuracy()
         idx = np.arange(self.train_x.shape[0], dtype=np.int32)
+        # frequency of gathering training status info
         skip = 20
         for epoch in range(num_epoch):
             np.random.shuffle(idx)
@@ -104,14 +113,14 @@ class Trainer():
 
             print 'testing loss = %f, accuracy = %f' % (loss / num_test_batch,
                                                         acc / num_test_batch)
+            # put test status info into a shared queue
             dic = dict(
-                phase = 'test',
+                phase='test',
                 #step = (epoch + 1) * num_train_batch / skip - 1,
-                step = epoch * num_train_batch / skip,
-                accuracy = acc / num_test_batch,
-                loss = loss / num_test_batch,
-                timestamp = time.time()
-            )
+                step=epoch * num_train_batch / skip,
+                accuracy=acc / num_test_batch,
+                loss=loss / num_test_batch,
+                timestamp=time.time())
             self.queue.put(dic)
 
             for b in range(num_train_batch):
@@ -127,14 +136,14 @@ class Trainer():
                     self.opt.apply_with_lr(epoch, get_lr(epoch), g, p,
                                            str(s.name))
                 info = 'training loss = %f, training accuracy = %f' % (l, a)
+                # put training status info into a shared queue
                 if b % skip == 0:
                     dic = dict(
-                        phase = 'train',
-                        step = (epoch * num_train_batch + b) / skip,
-                        accuracy = a,
-                        loss = l,
-                        timestamp = time.time()
-                    )
+                        phase='train',
+                        step=(epoch * num_train_batch + b) / skip,
+                        accuracy=a,
+                        loss=l,
+                        timestamp=time.time())
                     self.queue.put(dic)
 
                 # update progress bar
@@ -145,11 +154,15 @@ class Trainer():
             print info
 
             if epoch > 0 and epoch % 10 == 0:
-                self.model.save(os.path.join(data.parameter_folder,'parameter_%d' % epoch))
-        self.model.save(os.path.join(data.parameter_folder,'parameter'))
+                self.model.save(
+                    os.path.join(data.parameter_folder, 'parameter_%d' %
+                                 epoch))
+        self.model.save(os.path.join(data.parameter_folder, 'parameter'))
         return
-    
+
+
 def get_lr(epoch):
+    '''change learning rate as epoch goes up'''
     if epoch < 360:
         return 0.0008
     elif epoch < 540:

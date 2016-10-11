@@ -20,14 +20,27 @@ from singa import metric
 from singa import loss
 from singa import net as ffnet
 
+
 def add_layer_group(net, name, nb_filers, sample_shape=None):
-    net.add(layer.Conv2D(name + '_1',nb_filers,3,1,pad=1,input_sample_shape=sample_shape))
+    '''add a group of layers which will be used in vgg model recurrently'''
+    net.add(
+        layer.Conv2D(
+            name + '_1',
+            nb_filers,
+            3,
+            1,
+            pad=1,
+            input_sample_shape=sample_shape))
     net.add(layer.Activation(name + 'act_1'))
     net.add(layer.Conv2D(name + '_2', nb_filers, 3, 1, pad=1))
     net.add(layer.Activation(name + 'act_2'))
     net.add(layer.MaxPooling2D(name, 2, 2, pad=0))
 
-def create():
+
+def create(use_cpu = False):
+    '''create network of vgg model'''
+    if use_cpu:
+        layer.engine = 'singacpp'
     net = ffnet.FeedForwardNet(loss.SoftmaxCrossEntropy(), metric.Accuracy())
     add_layer_group(net, 'conv1', 64, (3, 32, 32))
     add_layer_group(net, 'conv2', 128)
@@ -40,4 +53,3 @@ def create():
     net.add(layer.Dropout('drop1'))
     net.add(layer.Dense('ip2', 10))
     return net
-

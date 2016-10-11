@@ -16,24 +16,26 @@
 # under the License.
 # =============================================================================
 import os, sys, shutil
-import urllib 
+import urllib
 import cPickle
 import numpy as np
 
 data_folder = "data_"
-tar_data_url='https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
-tar_data_name='cifar-10-python.tar.gz'
-data_path='cifar-10-batches-py'
+tar_data_url = 'https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
+tar_data_name = 'cifar-10-python.tar.gz'
+data_path = 'cifar-10-batches-py'
 
 parameter_folder = "parameter_"
-parameter_name= "parameter"
-tar_parameter_url="http://comp.nus.edu.sg/~dbsystem/singa/assets/file/parameter.tar.gz"
-tar_parameter_name='parameter.tar.gz'
+parameter_name = "parameter"
+tar_parameter_url = "http://comp.nus.edu.sg/~dbsystem/singa/assets/file/parameter.tar.gz"
+tar_parameter_name = 'parameter.tar.gz'
 
-mean_url="http://comp.nus.edu.sg/~dbsystem/singa/assets/file/train.mean.npy"
-mean_name="train.mean.npy"
+mean_url = "http://comp.nus.edu.sg/~dbsystem/singa/assets/file/train.mean.npy"
+mean_name = "train.mean.npy"
+
 
 def load_dataset(filepath):
+    '''load data from binary file'''
     print 'Loading data file %s' % filepath
     with open(filepath, 'rb') as fd:
         cifar10 = cPickle.load(fd)
@@ -49,7 +51,8 @@ def load_train_data(num_batches=5):
     batchsize = 10000
     images = np.empty((num_batches * batchsize, 3, 32, 32), dtype=np.uint8)
     for did in range(1, num_batches + 1):
-        fname_train_data = os.path.join(data_folder,data_path,"data_batch_{}".format(did))
+        fname_train_data = os.path.join(data_folder, data_path,
+                                        "data_batch_{}".format(did))
         image, label = load_dataset(fname_train_data)
         images[(did - 1) * batchsize:did * batchsize] = image
         labels.extend(label)
@@ -57,41 +60,51 @@ def load_train_data(num_batches=5):
     labels = np.array(labels, dtype=np.int32)
     return images, labels
 
+
 def load_test_data():
-    images, labels = load_dataset(os.path.join(data_folder,data_path,"test_batch"))
+    images, labels = load_dataset(
+        os.path.join(data_folder, data_path, "test_batch"))
     return np.array(images, dtype=np.float32), np.array(labels, dtype=np.int32)
+
 
 def load_mean_data():
     mean_path = os.path.join(data_folder, mean_name)
     if os.path.exists(mean_path):
         return np.load(mean_path)
-    return None 
+    return None
+
 
 def save_mean_data(mean):
     mean_path = os.path.join(data_folder, mean_name)
-    np.save(mean_path,mean)
+    np.save(mean_path, mean)
     return
 
+
 def train_file_prepare():
-    if os.path.exists(os.path.join(data_folder,data_path)):
+    '''download train file'''
+    if os.path.exists(os.path.join(data_folder, data_path)):
         return
 
     print "download file"
     #clean data
-    download_file(tar_data_url,data_folder)
-    untar_data(os.path.join(data_folder,tar_data_name), data_folder)
+    download_file(tar_data_url, data_folder)
+    untar_data(os.path.join(data_folder, tar_data_name), data_folder)
 
 
 def serve_file_prepare():
-    if not os.path.exists(os.path.join(parameter_folder,parameter_name)):
+    '''download parameter file and mean file'''
+    if not os.path.exists(os.path.join(parameter_folder, parameter_name)):
         print "download parameter file"
-        download_file(tar_parameter_url,parameter_folder)
-        untar_data(os.path.join(parameter_folder,tar_parameter_name), parameter_folder)
+        download_file(tar_parameter_url, parameter_folder)
+        untar_data(
+            os.path.join(parameter_folder, tar_parameter_name),
+            parameter_folder)
 
-    if not os.path.exists(os.path.join(data_folder,mean_name)):
+    if not os.path.exists(os.path.join(data_folder, mean_name)):
         print "download mean file"
-        download_file(mean_url,data_folder)
+        download_file(mean_url, data_folder)
     #clean data
+
 
 def download_file(url, dest):
     '''
@@ -103,22 +116,23 @@ def download_file(url, dest):
         file_name = url.split('/')[-1]
         target = os.path.join(dest, file_name)
         urllib.urlretrieve(url, target)
-    return 
+    return
 
-def get_parameter(file_name=None,auto_find=False):
+
+def get_parameter(file_name=None, auto_find=False):
     '''
     get a parameter file or return none
     '''
     if not os.path.exists(parameter_folder):
         os.makedirs(parameter_folder)
-        return None 
+        return None
 
     if file_name:
         return os.path.join(parameter_folder, file_name)
 
-    #find the last parameter file if outo_find is True 
+    #find the last parameter file if outo_find is True
     if auto_find:
-        parameter_list=[]
+        parameter_list = []
         for f in os.listdir(parameter_folder):
             if f.endswith(".model"):
                 parameter_list.append(os.path.join(parameter_folder, f[0:-6]))
@@ -128,6 +142,7 @@ def get_parameter(file_name=None,auto_find=False):
         return parameter_list[-1]
     else:
         return None
+
 
 def untar_data(file_path, dest):
     print 'untar data ..................'

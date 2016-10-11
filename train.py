@@ -27,6 +27,7 @@ from trainer import Trainer
 
 sys.path.append(os.getcwd())
 
+
 def main(argv=None):
     '''Command line options'''
     if argv is None:
@@ -66,20 +67,19 @@ def main(argv=None):
         use_cpu = args.use_cpu
 
         # start monitor server
+        # use multiprocessing to transfer training status information
         queue = Queue()
-        p = Process(
-            target=flaskserver.start_monitor,
-            args=(port,queue))
+        p = Process(target=flaskserver.start_monitor, args=(port, queue))
         p.start()
-        
+
         # start to train
-        m = model.create()
-        trainer = Trainer(m,use_cpu,queue)
+        m = model.create(use_cpu)
+        trainer = Trainer(m, use_cpu, queue)
         trainer.initialize(parameter_file)
         trainer.train()
 
         p.terminate()
-    except :
+    except:
         p.terminate()
         traceback.print_exc()
         sys.stderr.write("  for help use --help \n\n")

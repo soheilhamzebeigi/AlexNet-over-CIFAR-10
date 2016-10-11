@@ -23,9 +23,10 @@ import sys, os, traceback
 
 import flaskserver
 import model
-from service import Service 
+from service import Service
 
 sys.path.append(os.getcwd())
+
 
 def main(argv=None):
     '''Command line options'''
@@ -64,16 +65,16 @@ def main(argv=None):
         port = args.port
         parameter_file = args.parameter
         use_cpu = args.use_cpu
-        
+
         # start to train
-        m = model.create()
-        service =Service(m,use_cpu)
+        m = model.create(use_cpu)
+        service = Service(m, use_cpu)
         print parameter_file
         service.initialize(parameter_file)
-        
-        flaskserver.start_serve(port,service)
 
-    except :
+        flaskserver.start_serve(port, service)
+
+    except:
         traceback.print_exc()
         sys.stderr.write("  for help use --help \n\n")
         return 2
