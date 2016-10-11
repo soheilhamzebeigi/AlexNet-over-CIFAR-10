@@ -42,20 +42,20 @@ class Trainer():
             parameter = data.get_parameter(parameter_file)
             print 'initialize with %s' % parameter
             self.model.load(parameter)
-
+        else:
+            for (p, specs) in zip(self.model.param_values(),
+                                  self.model.param_specs()):
+                filler = specs.filler
+                if filler.type == 'gaussian':
+                    initializer.gaussian(p, filler.mean, filler.std)
+                elif filler.type == 'xavier':
+                    initializer.xavier(p)
+                    p *= 0.5  # 0.5 if use glorot, which would have val acc to 83
+                else:
+                    p.set_value(0)
+                self.opt.register(p, specs)
+                print specs.name, filler.type, p.l1()
         self.model.to_device(self.device)
-        for (p, specs) in zip(self.model.param_values(),
-                              self.model.param_specs()):
-            filler = specs.filler
-            if filler.type == 'gaussian':
-                initializer.gaussian(p, filler.mean, filler.std)
-            elif filler.type == 'xavier':
-                initializer.xavier(p)
-                p *= 0.5  # 0.5 if use glorot, which would have val acc to 83
-            else:
-                p.set_value(0)
-            self.opt.register(p, specs)
-            print specs.name, filler.type, p.l1()
         print 'End intialization............'
 
     def data_prepare(self):
