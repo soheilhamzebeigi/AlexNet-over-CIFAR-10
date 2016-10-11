@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+
+<head>
+  <meta charset="utf-8">
+  <title>Foodlg - Insight into your titbits</title>
+  <meta name="description" content="">
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.12.4.min.js"></script>
+</head>
+
+<body>
+  <h2>CIFAR PREDICTION</h2>
+  <form>
+        <p>Please upload a jpg file!</p>
+        <input id="file-input" type="file" accept="image/*;capture=camera" ></input>
+  </form>
+  <button id="go">GO</button>
+  <br/>
+  <img id="image" src=""/>
+  <div id="result"></div>
+</body>
+<script language="javascript">
+
+    $("#go").click(function(){
+        var f = $("#file-input")[0].files[0];
+        ReadFile(f,function(result){
+            var file = DataURItoBlob(result);
+            $("#image").attr("src",result);
+            predict_dish(file);
+        });
+    });       
+    function predict_dish(file){
+        var formData = new FormData();
+        formData.append('image', file, "image.jpg");
+        $.ajax({
+            url:"/predict",
+            data:formData,
+            type:"POST",
+            processData: false, // Don't process the files
+            contentType: false, 
+            success:function(response){
+                $("#result").html(response);
+            },
+            error:function(e){
+                console.log(e);
+                $("#result").html("Error Occurs!");
+            }
+        });
+    }  
+
+   var ReadFile = function(file,callback) {
+        var reader = new FileReader();
+
+        reader.onloadend = function () {
+            ProcessFile(reader.result, file.type,callback);
+        }
+
+        reader.onerror = function () {
+            alert('There was an error reading the file!');
+        }
+
+        reader.readAsDataURL(file);
+    }
+    var ProcessFile = function(dataURL, fileType,callback) {
+        var maxWidth = 400;
+        var maxHeight = 400;
+
+        var image = new Image();
+        image.src = dataURL;
+
+        image.onload = function () {
+            var width = image.width;
+            var height = image.height;
+            var shouldResize = (width > maxWidth) || (height > maxHeight);
+
+            if (!shouldResize) {
+                callback(dataURL);
+                return;
+            }
+
+            var newWidth;
+            var newHeight;
+
+            if (width > height) {
+                newHeight = height * (maxWidth / width);
+                newWidth = maxWidth;
+            } else {
+                newWidth = width * (maxHeight / height);
+                newHeight = maxHeight;
+            }
+
+            var canvas = document.createElement('canvas');
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+
+            var context = canvas.getContext('2d');
+
+            context.drawImage(this, 0, 0, newWidth, newHeight);
+
+            dataURL = canvas.toDataURL(fileType);
+            
+            callback(dataURL);
+        };
+
+        image.onerror = function () {
+            alert('There was an error processing your file!');
+        };
+    }
+    var DataURItoBlob = function(dataURI) {
+        // convert base64 to raw binary data held in a string
+        // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+        var byteString = atob(dataURI.split(',')[1]);
+
+        // separate out the mime component
+        var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+        // write the bytes of the string to an ArrayBuffer
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        try {
+            return new Blob([ab], {type: mimeString});
+        } catch (e) {
+            // The BlobBuilder API has been deprecated in favour of Blob, but older
+            // browsers don't know about the Blob constructor
+            // IE10 also supports BlobBuilder, but since the `Blob` constructor
+            //  also works, there's no need to add `MSBlobBuilder`.
+            var BlobBuilder = window.WebKitBlobBuilder || window.MozBlobBuilder;
+            var bb = new BlobBuilder();
+            bb.append(ab);
+            return bb.getBlob(mimeString);
+        }
+    }    
+</script>
+</html>

@@ -23,7 +23,7 @@ import sys, os, traceback
 
 import flaskserver
 import model
-from trainer import Trainer
+from service import Service
 
 sys.path.append(os.getcwd())
 
@@ -66,21 +66,15 @@ def main(argv=None):
         parameter_file = args.parameter
         use_cpu = args.use_cpu
 
-        # start monitor server
-        # use multiprocessing to transfer training status information
-        queue = Queue()
-        p = Process(target=flaskserver.start_monitor, args=(port, queue))
-        p.start()
-
         # start to train
         m = model.create(use_cpu)
-        trainer = Trainer(m, use_cpu, queue)
-        trainer.initialize(parameter_file)
-        trainer.train()
+        service = Service(m, use_cpu)
+        print parameter_file
+        service.initialize(parameter_file)
 
-        p.terminate()
+        flaskserver.start_serve(port, service)
+
     except:
-        p.terminate()
         traceback.print_exc()
         sys.stderr.write("  for help use --help \n\n")
         return 2
