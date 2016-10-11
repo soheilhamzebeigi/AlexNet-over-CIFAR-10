@@ -65,7 +65,7 @@ class Trainer():
         self.train_x, self.train_y = data.load_train_data()
         self.test_x, self.test_y = data.load_test_data()
         self.mean = data.load_mean_data()
-        if not self.mean:
+        if self.mean == None:
             self.mean=np.average(self.train_x, axis=0)
             data.save_mean_data(self.mean)
         self.train_x -= self.mean
@@ -145,8 +145,8 @@ class Trainer():
             print info
 
             if epoch > 0 and epoch % 10 == 0:
-                self.model.save('model_%d.bin' % epoch)
-        self.model.save('model.bin')
+                self.model.save(os.path.join(data.parameter_folder,'parameter_%d' % epoch))
+        self.model.save(os.path.join(data.parameter_folder,'parameter'))
         return
     
 def get_lr(epoch):

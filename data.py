@@ -65,7 +65,7 @@ def load_mean_data():
     mean_path = os.path.join(data_folder, mean_name)
     if os.path.exists(mean_path):
         return np.load(mean_path)
-    return 
+    return None 
 
 def save_mean_data(mean):
     mean_path = os.path.join(data_folder, mean_name)
