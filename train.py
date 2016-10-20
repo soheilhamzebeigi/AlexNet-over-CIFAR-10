@@ -256,7 +256,7 @@ class Trainer():
                 self.model.save(
                     os.path.join(data.parameter_folder, 'parameter_%d' %
                                  epoch))
-        self.model.save(os.path.join(data.parameter_folder, 'parameter'))
+        self.model.save(os.path.join(data.parameter_folder, 'parameter_last'))
         return
 
 
