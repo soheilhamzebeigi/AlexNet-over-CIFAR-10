@@ -20,16 +20,9 @@ from singa import metric
 from singa import loss
 from singa import net as ffnet
 
-
 def add_layer_group(net, name, nb_filers, sample_shape=None):
     '''add a group of layers which will be used in vgg model recurrently'''
-    net.add(
-        layer.Conv2D(
-            name + '_1',
-            nb_filers,
-            3,
-            1,
-            pad=1,
+    net.add(layer.Conv2D(name + '_1',nb_filers,3,1,pad=1,
             input_sample_shape=sample_shape))
     net.add(layer.Activation(name + 'act_1'))
     net.add(layer.Conv2D(name + '_2', nb_filers, 3, 1, pad=1))

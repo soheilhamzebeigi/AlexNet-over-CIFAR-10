@@ -8,24 +8,24 @@
 
 <head>
   <meta charset="utf-8">
-  <title>Foodlg - Insight into your titbits</title>
+  <title>CIFAR</title>
   <meta name="description" content="">
   <script type="text/javascript" src="http://code.jquery.com/jquery-1.12.4.min.js"></script>
 </head>
 
 <body>
-  <h2>CIFAR PREDICTION</h2>
+  <h2>CIFAR Serving</h2>
+  <button id="stop">STOP</button>
   <form>
         <p>Please upload a jpg file!</p>
         <input id="file-input" type="file" accept="image/*;capture=camera" ></input>
   </form>
-  <button id="go">GO</button>
+  <button id="go">Predict</button>
   <br/>
   <img id="image" src=""/>
   <div id="result"></div>
 </body>
 <script language="javascript">
-
     $("#go").click(function(){
         var f = $("#file-input")[0].files[0];
         ReadFile(f,function(result){
@@ -34,11 +34,28 @@
             predict_dish(file);
         });
     });       
+
+    $("#stop").click(function(){
+        $.ajax({
+            url:"/command/stop",
+            type:"POST",
+            processData: false, // Don't process the files
+            contentType: false, 
+            success:function(response){
+                alert("Stop Success!");
+            },
+            error:function(e){
+		console.log(e);
+                alert("Stop Failed!");
+            }
+        });
+
+    });       
     function predict_dish(file){
         var formData = new FormData();
         formData.append('image', file, "image.jpg");
         $.ajax({
-            url:"/predict",
+            url:"/api",
             data:formData,
             type:"POST",
             processData: false, // Don't process the files
