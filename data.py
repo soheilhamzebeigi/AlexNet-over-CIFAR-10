@@ -94,7 +94,7 @@ def train_file_prepare():
 
 def serve_file_prepare():
     '''download parameter file and mean file'''
-    if not os.path.exists(os.path.join(parameter_folder, parameter_name)):
+    if not os.path.exists(os.path.join(parameter_folder, tar_parameter_name)):
         print "download parameter file"
         download_file(tar_parameter_url, parameter_folder)
         untar_data(

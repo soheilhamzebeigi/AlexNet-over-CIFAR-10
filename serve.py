@@ -70,6 +70,7 @@ def main(argv=None):
             "-param",
             "--parameter",
             dest="parameter",
+            default="parameter",
             help="the parameter file path to be loaded")
         parser.add_argument(
             "-C",
