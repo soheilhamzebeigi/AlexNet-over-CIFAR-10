@@ -11,24 +11,37 @@
   <title>CIFAR</title>
   <meta name="description" content="">
   <script type="text/javascript" src="http://code.jquery.com/jquery-1.12.4.min.js"></script>
+  <style>
+    body{
+        text-align:center;
+    }
+    h2{
+	text-align:center;
+    }
+    #result{
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+    }
+  </style>
 </head>
 
 <body>
-  <h2>CIFAR Serving</h2>
+  <h2>CIFAR 10, Image Classification Live Service</h2>
   <!--
   <button id="stop">STOP</button>
+  <button id="go">Predict</button>
   -->
   <form>
         <p>Please upload a jpg file!</p>
         <input id="file-input" type="file" accept="image/*;capture=camera" ></input>
   </form>
-  <button id="go">Predict</button>
   <br/>
   <img id="image" src=""/>
   <div id="result"></div>
 </body>
 <script language="javascript">
-    $("#go").click(function(){
+    $("#file-input").change(function(){
         var f = $("#file-input")[0].files[0];
         ReadFile(f,function(result){
             var file = DataURItoBlob(result);
