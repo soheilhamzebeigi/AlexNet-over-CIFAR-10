@@ -69,6 +69,8 @@ def main():
         trainer = Trainer(m,agent,use_cpu)
         trainer.initialize(parameter_file)
         trainer.train()
+        #wait the agent finish handling http request
+        time.sleep(1)
         agent.stop()
 
     except SystemExit:

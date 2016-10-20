@@ -90,6 +90,8 @@ def main(argv=None):
         service = Service(agent,use_cpu)
         service.initialize(parameter_file)
         service.serve()
+        #wait the agent finish handling http request
+        time.sleep(1)
         agent.stop()
 
     except SystemExit:
@@ -130,7 +132,7 @@ class Service():
             if msg == None:
                 continue
             msg=MsgType.parse(msg)
-            if MsgType.kRequest.equal(msg):
+            if msg.is_request():
                 try:
                     response = ""
                     images = []
@@ -160,10 +162,13 @@ class Service():
                 if MsgType.kCommandStop.equal(msg):
                     print 'get stop command'
                     self.agent.push(MsgType.kStatus,"success")
-                    time.sleep(1)
                     break
+                else:
+                    print 'get unsupported command %s' % str(msg)
+                    self.agent.push(MsgType.kStatus,"failure")
             else:
-                time.sleep(1)
+                print 'get  unsupported message %s' % str(msg)
+                self.agent.push(MsgType.kStatus,"failure")
                 break
             time.sleep(0.01)
             # while loop
