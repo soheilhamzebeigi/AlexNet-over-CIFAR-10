@@ -27,7 +27,7 @@ data_path = 'cifar-10-batches-py'
 
 parameter_folder = "parameter_"
 parameter_name = "parameter"
-tar_parameter_url = "http://comp.nus.edu.sg/~dbsystem/singa/assets/file/parameter.tar.gz"
+tar_parameter_url = "http://comp.nus.edu.sg/~dbsystem/singa/assets/file/cifar/parameter.tar.gz"
 tar_parameter_name = 'parameter.tar.gz'
 
 mean_url = "http://comp.nus.edu.sg/~dbsystem/singa/assets/file/train.mean.npy"
