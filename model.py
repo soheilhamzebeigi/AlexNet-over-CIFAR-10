@@ -20,29 +20,35 @@ from singa import metric
 from singa import loss
 from singa import net as ffnet
 
-def add_layer_group(net, name, nb_filers, sample_shape=None):
-    '''add a group of layers which will be used in vgg model recurrently'''
-    net.add(layer.Conv2D(name + '_1',nb_filers,3,1,pad=1,
-            input_sample_shape=sample_shape))
-    net.add(layer.Activation(name + 'act_1'))
-    net.add(layer.Conv2D(name + '_2', nb_filers, 3, 1, pad=1))
-    net.add(layer.Activation(name + 'act_2'))
-    net.add(layer.MaxPooling2D(name, 2, 2, pad=0))
 
-
-def create(use_cpu = False):
-    '''create network of vgg model'''
+def create_net(use_cpu=False):
     if use_cpu:
         layer.engine = 'singacpp'
+
     net = ffnet.FeedForwardNet(loss.SoftmaxCrossEntropy(), metric.Accuracy())
-    add_layer_group(net, 'conv1', 64, (3, 32, 32))
-    add_layer_group(net, 'conv2', 128)
-    add_layer_group(net, 'conv3', 256)
-    add_layer_group(net, 'conv4', 512)
-    add_layer_group(net, 'conv5', 512)
+    W0_specs = {'init': 'gaussian', 'mean': 0, 'std': 0.0001}
+    W1_specs = {'init': 'gaussian', 'mean': 0, 'std': 0.01}
+    W2_specs = {'init': 'gaussian', 'mean': 0, 'std': 0.01, 'decay_mult': 250}
+
+    b_specs = {'init': 'constant', 'value': 0, 'lr_mult': 2, 'decay_mult': 0}
+    net.add(layer.Conv2D('conv1', 32, 5, 1, W_specs=W0_specs.copy(),
+                         b_specs=b_specs.copy(), pad=2,
+                         input_sample_shape=(3, 32, 32,)))
+    net.add(layer.MaxPooling2D('pool1', 3, 2, pad=1))
+    net.add(layer.Activation('relu1'))
+    net.add(layer.LRN(name='lrn1', size=3, alpha=5e-5))
+    net.add(layer.Conv2D('conv2', 32, 5, 1, W_specs=W1_specs.copy(),
+                         b_specs=b_specs.copy(), pad=2))
+    net.add(layer.Activation('relu2'))
+    net.add(layer.AvgPooling2D('pool2', 3, 2,  pad=1))
+    net.add(layer.LRN('lrn2', size=3, alpha=5e-5))
+    net.add(layer.Conv2D('conv3', 64, 5, 1, W_specs=W1_specs.copy(),
+                         b_specs=b_specs.copy(), pad=2))
+    net.add(layer.Activation('relu3'))
+    net.add(layer.AvgPooling2D('pool3', 3, 2, pad=1))
     net.add(layer.Flatten('flat'))
-    net.add(layer.Dense('ip1', 512))
-    net.add(layer.Activation('relu_ip1'))
-    net.add(layer.Dropout('drop1'))
-    net.add(layer.Dense('ip2', 10))
+    net.add(layer.Dense('dense', 10, W_specs=W2_specs.copy(),
+                        b_specs=b_specs.copy()))
+        # print specs.name, filler.type, p.l1()
+
     return net
