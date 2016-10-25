@@ -39,6 +39,7 @@ def main():
 
         parser.add_argument('-p', '--port', default=9999, help='listening port')
         parser.add_argument('-C', '--use_cpu', action="store_true")
+        parser.add_argument('--max_epoch', default=140)
 
         # Process arguments
         args = parser.parse_args()
@@ -53,9 +54,9 @@ def main():
             dev = device.create_cuda_gpu()
 
         # start to train
-        net = model.create(use_cpu)
+        net = model.create_net(use_cpu)
         agent = Agent(port)
-        train(net, dev, agent)
+        train(net, dev, agent, args.max_epoch)
         #wait the agent finish handling http request
         agent.stop()
     except SystemExit:
@@ -82,7 +83,7 @@ def initialize(net, dev, opt):
 
 def get_data():
     '''load data'''
-    data.train_file_prepare()
+    data.prepare_train_files()
 
     train_x, train_y = data.load_train_data()
     test_x, test_y = data.load_test_data()
@@ -132,7 +133,7 @@ def get_lr(epoch):
         return 0.00001
 
 
-def train(net, dev, agent):
+def train(net, dev, agent, max_epoch, batch_size=100):
     agent.push(MsgType.kStatus, 'Downlaoding data...')
     train_x, train_y, test_x, test_y = get_data()
     print 'training shape', train_x.shape, train_y.shape
@@ -144,15 +145,15 @@ def train(net, dev, agent):
 
     initialize(net, dev, opt)
 
-    tx = tensor.Tensor((batch_size, 3, 32, 32), self.device)
-    ty = tensor.Tensor((batch_size, ), self.device, core_pb2.kInt)
+    tx = tensor.Tensor((batch_size, 3, 32, 32), dev)
+    ty = tensor.Tensor((batch_size, ), dev, core_pb2.kInt)
     num_train_batch = train_x.shape[0] / batch_size
     num_test_batch = test_x.shape[0] / (batch_size)
 
-    idx = np.arange(self.train_x.shape[0], dtype=np.int32)
+    idx = np.arange(train_x.shape[0], dtype=np.int32)
 
-    for epoch in range(num_epoch):
-        if not handle_cmd(agent):
+    for epoch in range(max_epoch):
+        if handle_cmd(agent):
             break
         np.random.shuffle(idx)
         print 'Epoch %d' % epoch
@@ -164,7 +165,7 @@ def train(net, dev, agent):
             y = test_y[b * batch_size:(b + 1) * batch_size]
             tx.copy_from_numpy(x)
             ty.copy_from_numpy(y)
-            l, a = self.model.evaluate(tx, ty)
+            l, a = net.evaluate(tx, ty)
             loss += l
             acc += a
         print 'testing loss = %f, accuracy = %f' % (loss / num_test_batch,
@@ -187,9 +188,9 @@ def train(net, dev, agent):
             grads, (l, a) = net.train(tx, ty)
             loss += l
             acc += a
-            for (s, p, g) in zip(self.model.param_specs(),
-                                 self.model.param_values(), grads):
-                self.opt.apply_with_lr(epoch, get_lr(epoch), g, p,
+            for (s, p, g) in zip(net.param_specs(),
+                                 net.param_values(), grads):
+                opt.apply_with_lr(epoch, get_lr(epoch), g, p,
                                        str(s.name))
             info = 'training loss = %f, training accuracy = %f' % (l, a)
             utils.update_progress(b * 1.0 / num_train_batch, info)
@@ -207,8 +208,7 @@ def train(net, dev, agent):
 
         if epoch > 0 and epoch % 30 == 0:
             net.save(os.path.join(data.parameter_folder, 'parameter_%d' % epoch))
-    self.model.save(os.path.join(data.parameter_folder, 'parameter_last'))
-    return
+    net.save(os.path.join(data.parameter_folder, 'parameter_last'))
 
 
 if __name__ == '__main__':

@@ -6,9 +6,8 @@ The best validation accuracy (without data augmentation) we achieved was about 8
 
 ## SINGA version
 
-Note that all examples should clearly specify the SINGA version against which the scripts are tested. The format is Apache SINGA-<VERSION>-<COMMITID>. For example,
-All scripts have been tested against [Apache SINGA-v1.0.0-fac3af9](https://github.com/apache/incubator-singa/commit/fac3af94990e4c9977f82a11ae85f89de9dbb463).
-
+Note that all examples should clearly specify the SINGA version against which the scripts are tested. The format is `Apache SINGA-<VERSION>-<COMMITID>`. For example,
+All scripts have been tested against [Apache SINGA-v1.0.0-fac3af9](https://github.com/apache/incubator-singa/tree/4826d40a1a6b67dd322fec5d3f6a5af1a17dc73d).
 
 ## Folder layout
 
@@ -16,10 +15,10 @@ The folder structure for an example is as follows where README.md is required an
 
 * README.md. Every example **should have** a README.md file for the model description, SINGA version and running instructions.
 * train.py. The training script. Users should be able to run it directly by `python train.py`. It is optional if the model is shared only for prediction or serving tasks.
-* serve.py. The serving script. It is typically used in the cloud mode, where users can submit the query via the web front end provided by Rafiki. If the local mode is enabled, it should accepts command line input. It is optional if the model is shared only for training tasks.
+* serve.py. The serving script. Users can submit the query via the web front end provided by Rafiki or via curl. It is optional if the model is shared only for training tasks.
 * model.py. It has the functions for creating the neural net. It could be merged into train.py and serve.py, hence are optional.
 * data.py. This file includes functions for downloading and extracting data and parameters. These functions could be merged into the train.py and serve.py, hence are optional.
-* index.html. This file is used for the serving task, which provides a web page for users to submit queries and get responses for the results. If is required for running the serving task in the cloud mode. If the model is shared only for training or running in the local mode, it is optional.
+* index.html. This file is used for the serving task, which provides a web page for users to submit queries and get responses for the results. It is required for running the serving task in the cloud mode. If the model is shared only for training or running in the local mode, it is optional.
 * requirements.txt. For specifying the python libraries used by users' code. It is optional if no third-party libs are used.
 
 Some models may have other files and scripts. Typically, it is not recommended to put large files (e.g. >10MB) into this folder as it would be slow to clone the gist repo.
@@ -29,6 +28,11 @@ Some models may have other files and scripts. Typically, it is not recommended t
 ### Local mode
 To run the scripts on your local computer, you need to install SINGA.
 Please refer to the [installation page](http://singa.apache.org/en/docs/installation.html) for detailed instructions.
+
+To install the libraries in requirement.txt, please run
+
+    pip install -r requirements.txt
+
 
 #### Training
 The training program could be started by

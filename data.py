@@ -27,11 +27,9 @@ data_path = 'cifar-10-batches-py'
 
 parameter_folder = "parameter_"
 parameter_name = "parameter"
-tar_parameter_url = "http://comp.nus.edu.sg/~dbsystem/singa/assets/file/cifar/parameter.tar.gz"
-tar_parameter_name = 'parameter.tar.gz'
-
-mean_url = "http://comp.nus.edu.sg/~dbsystem/singa/assets/file/train.mean.npy"
-mean_name = "train.mean.npy"
+tar_parameter_url = "http://comp.nus.edu.sg/~dbsystem/singa/assets/file/cifar10-alexnet.tar.gz"
+tar_parameter_name = tar_parameter_url.split('/')[-1]
+mean_name = 'mean.npy'
 
 
 def load_dataset(filepath):
@@ -67,20 +65,12 @@ def load_test_data():
     return np.array(images, dtype=np.float32), np.array(labels, dtype=np.int32)
 
 
-def load_mean_data():
-    mean_path = os.path.join(data_folder, mean_name)
-    if os.path.exists(mean_path):
-        return np.load(mean_path)
-    return None
-
-
 def save_mean_data(mean):
-    mean_path = os.path.join(data_folder, mean_name)
+    mean_path = os.path.join(parameter_folder, mean_name)
     np.save(mean_path, mean)
-    return
 
 
-def train_file_prepare():
+def prepare_train_files():
     '''download train file'''
     if os.path.exists(os.path.join(data_folder, data_path)):
         return
@@ -92,25 +82,21 @@ def train_file_prepare():
     if not os.path.exists(parameter_folder):
         os.makedirs(parameter_folder)
 
-def serve_file_prepare():
-    '''download parameter file and mean file'''
+def prepare_serve_files():
+    '''download parameter file including mean file'''
     if not os.path.exists(os.path.join(parameter_folder, tar_parameter_name)):
+        if not os.path.exists(parameter_folder):
+            os.makedirs(parameter_folder)
         print "download parameter file"
         download_file(tar_parameter_url, parameter_folder)
         untar_data(
             os.path.join(parameter_folder, tar_parameter_name),
             parameter_folder)
 
-    if not os.path.exists(os.path.join(data_folder, mean_name)):
-        print "download mean file"
-        download_file(mean_url, data_folder)
-    #clean data
 
 
 def download_file(url, dest):
-    '''
-    download one file to dest
-    '''
+    ''' download one file to dest '''
     if not os.path.exists(dest):
         os.makedirs(dest)
     if (url.startswith('http')):
@@ -121,22 +107,20 @@ def download_file(url, dest):
 
 
 def get_parameter(file_name=None, auto_find=False):
-    '''
-    get a parameter file or return none
-    '''
+    ''' get a parameter file or return none '''
     if not os.path.exists(parameter_folder):
         os.makedirs(parameter_folder)
         return None
 
-    if file_name:
+    if file_name is not None and len(file_name):
         return os.path.join(parameter_folder, file_name)
 
     #find the last parameter file if outo_find is True
     if auto_find:
         parameter_list = []
-        for f in os.listdir(parameter_folder):
+        for f in os.listdir(os.path.join(parameter_folder, parameter_name)):
             if f.endswith(".model"):
-                parameter_list.append(os.path.join(parameter_folder, f[0:-6]))
+                parameter_list.append(os.path.join(parameter_folder, parameter_name, f[0:-6]))
         if len(parameter_list) == 0:
             return None
         parameter_list.sort()
@@ -145,9 +129,16 @@ def get_parameter(file_name=None, auto_find=False):
         return None
 
 
+def load_mean_data():
+    mean_path = os.path.join(parameter_folder, parameter_name, mean_name)
+    if os.path.exists(mean_path):
+        return np.load(mean_path)
+    return None
+
+
 def untar_data(file_path, dest):
-    print 'untar data ..................'
     tar_file = file_path
+    print 'untar data ..................', tar_file
     import tarfile
     tar = tarfile.open(tar_file)
     print dest

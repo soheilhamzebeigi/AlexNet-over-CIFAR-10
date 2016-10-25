@@ -62,7 +62,7 @@ def get_name(label):
 
 
 def serve(agent, use_cpu, parameter_file):
-    net = model.create(use_cpu)
+    net = model.create_net(use_cpu)
     if use_cpu:
         print "running with cpu"
         dev = device.get_default_device()
@@ -71,12 +71,12 @@ def serve(agent, use_cpu, parameter_file):
         dev = device.create_cuda_gpu()
     agent = agent
 
-    data.serve_file_prepare()
+    data.prepare_serve_files()
     print 'Start intialization............'
     parameter = data.get_parameter(parameter_file, True)
     print 'initialize with %s' % parameter
     net.load(parameter)
-    net.to_device(device)
+    net.to_device(dev)
     print 'End intialization............'
     mean = data.load_mean_data()
 
@@ -90,15 +90,14 @@ def serve(agent, use_cpu, parameter_file):
             try:
                 response = ""
                 images = []
-                for im in image_transform(data):
+                for im in image_transform(val):
                     ary = np.array(im.convert('RGB'), dtype=np.float32)
-                    images.append(ary.transpose(2, 0, 1))
+                    images.append(ary.transpose(2, 0, 1) - mean)
                 images = np.array(images)
-                images -= mean  # normalize
 
                 x = tensor.from_numpy(images.astype(np.float32))
                 x.to_device(dev)
-                y = model.predict(x)
+                y = net.predict(x)
                 y.to_host()
                 y = tensor.to_numpy(y)
                 prob = np.average(y, 0)
