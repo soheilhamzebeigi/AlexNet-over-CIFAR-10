@@ -23,7 +23,7 @@ import time
 import numpy as np
 from argparse import ArgumentParser
 from singa import tensor, device, optimizer
-from singa import utils, metric
+from singa import utils
 from singa.proto import core_pb2
 from rafiki.agent import Agent, MsgType
 
@@ -57,14 +57,13 @@ def main():
         net = model.create_net(use_cpu)
         agent = Agent(port)
         train(net, dev, agent, args.max_epoch)
-        #wait the agent finish handling http request
         agent.stop()
     except SystemExit:
         return
     except:
-        #p.terminate()
         traceback.print_exc()
         sys.stderr.write("  for help use --help \n\n")
+
 
 def initialize(net, dev, opt):
     '''initialize all parameters in the model'''
@@ -105,17 +104,17 @@ def handle_cmd(agent):
             msg_type = MsgType.parse(key)
             if msg_type.is_command():
                 if MsgType.kCommandPause.equal(msg_type):
-                    agent.push(MsgType.kStatus,"Success")
+                    agent.push(MsgType.kStatus, "Success")
                     pause = True
                 elif MsgType.kCommandResume.equal(msg_type):
                     agent.push(MsgType.kStatus, "Success")
                     pause = False
                 elif MsgType.kCommandStop.equal(msg_type):
-                    agent.push(MsgType.kStatus,"Success")
+                    agent.push(MsgType.kStatus, "Success")
                     stop = True
                 else:
-                    agent.push(MsgType.kStatus,"Warning, unkown message type")
-                    print "Unsupported command %s" % str(msg)
+                    agent.push(MsgType.kStatus, "Warning, unkown message type")
+                    print "Unsupported command %s" % str(key)
         if pause and not stop:
             time.sleep(0.1)
         else:
@@ -141,7 +140,6 @@ def train(net, dev, agent, max_epoch, batch_size=100):
     agent.push(MsgType.kStatus, 'Finish downloading data')
 
     opt = optimizer.SGD(momentum=0.9, weight_decay=0.0005)
-    accuracy = metric.Accuracy()
 
     initialize(net, dev, opt)
 
@@ -158,7 +156,6 @@ def train(net, dev, agent, max_epoch, batch_size=100):
         np.random.shuffle(idx)
         print 'Epoch %d' % epoch
 
-
         loss, acc = 0.0, 0.0
         for b in range(num_test_batch):
             x = test_x[b * batch_size:(b + 1) * batch_size]
@@ -173,10 +170,10 @@ def train(net, dev, agent, max_epoch, batch_size=100):
         # put test status info into a shared queue
         info = dict(
             phase='test',
-            step = epoch,
-            accuracy = acc / num_test_batch,
-            loss = loss / num_test_batch,
-            timestamp = time.time())
+            step=epoch,
+            accuracy=acc/num_test_batch,
+            loss=loss/num_test_batch,
+            timestamp=time.time())
         agent.push(MsgType.kInfoMetric, info)
 
         loss, acc = 0.0, 0.0
@@ -190,24 +187,24 @@ def train(net, dev, agent, max_epoch, batch_size=100):
             acc += a
             for (s, p, g) in zip(net.param_specs(),
                                  net.param_values(), grads):
-                opt.apply_with_lr(epoch, get_lr(epoch), g, p,
-                                       str(s.name))
+                opt.apply_with_lr(epoch, get_lr(epoch), g, p, str(s.name))
             info = 'training loss = %f, training accuracy = %f' % (l, a)
             utils.update_progress(b * 1.0 / num_train_batch, info)
         # put training status info into a shared queue
         info = dict(
             phase='train',
-            step= epoch,
-            accuracy = acc / num_train_batch,
-            loss = loss / num_train_batch,
-            timestamp = time.time())
+            step=epoch,
+            accuracy=acc/num_train_batch,
+            loss=loss/num_train_batch,
+            timestamp=time.time())
         agent.push(MsgType.kInfoMetric, info)
         info = 'training loss = %f, training accuracy = %f' \
             % (loss / num_train_batch, acc / num_train_batch)
         print info
 
         if epoch > 0 and epoch % 30 == 0:
-            net.save(os.path.join(data.parameter_folder, 'parameter_%d' % epoch))
+            net.save(os.path.join(data.parameter_folder,
+                                  'parameter_%d' % epoch))
     net.save(os.path.join(data.parameter_folder, 'parameter_last'))
 
 

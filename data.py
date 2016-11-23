@@ -121,6 +121,8 @@ def get_parameter(file_name=None, auto_find=False):
         for f in os.listdir(os.path.join(parameter_folder, parameter_name)):
             if f.endswith(".model"):
                 parameter_list.append(os.path.join(parameter_folder, parameter_name, f[0:-6]))
+            if f.endswith(".bin"):
+                parameter_list.append(os.path.join(parameter_folder, parameter_name, f[0:-4]))
         if len(parameter_list) == 0:
             return None
         parameter_list.sort()
